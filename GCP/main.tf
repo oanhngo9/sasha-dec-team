@@ -66,7 +66,18 @@ resource "google_compute_target_http_proxy" "lb_target_http_proxy" {
 resource "google_compute_global_forwarding_rule" "lb_global_forwarding_rule" {
   name                  = "lb-global-forwarding-rule"
   target                = google_compute_target_http_proxy.lb_target_http_proxy.self_link
-  port_range            = "80"
+  port_range            = ["80", "8080", "1000-2000"]
+}
+resource "google_compute_global_forwarding_rule" "lb_global_forwarding_rule_8080" {
+  name       = "lb-global-forwarding-rule-8080"
+  target     = google_compute_target_http_proxy.lb_target_http_proxy.self_link
+  port_range = "8080"
+}
+
+resource "google_compute_global_forwarding_rule" "lb_global_forwarding_rule_1000_2000" {
+  name       = "lb-global-forwarding-rule-1000-2000"
+  target     = google_compute_target_http_proxy.lb_target_http_proxy.self_link
+  port_range = "1000-2000"
 }
 
 # Autoscaling Resources
@@ -134,20 +145,17 @@ resource "google_compute_autoscaler" "default" {
   }
 }
 
-# Google Cloud SQL Resources
 resource "google_sql_database_instance" "default" {
-  name             = "mysql-instance"
+  name             = "database-instance"
   database_version = "MYSQL_5_7"
-  region           = var.region
+  region           = "us-central1"
 
   settings {
     tier = "db-f1-micro"
 
     backup_configuration {
+      binary_log_enabled = true
       enabled            = true
-      start_time         = "03:00"
-      location           = "us"
-      point_in_time_recovery_enabled = true
     }
   }
 }
@@ -166,7 +174,11 @@ resource "google_secret_manager_secret" "db_password" {
   }
 
   replication {
-    automatic = true
+    user_managed {
+      replicas {
+        location = "us-central1"
+      }
+    }
   }
 }
 
