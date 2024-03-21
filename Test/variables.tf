@@ -111,3 +111,10 @@ variable "instance_count" {
   default = 1
   type        = number
 }
+
+variable "secret_id" {
+  description = "The id of the secret"
+  default = "fhoclkvzqv"
+  type        = string
+}
+
